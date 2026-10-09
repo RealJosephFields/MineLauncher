@@ -1,0 +1,48 @@
+name: Build macOS DMG
+
+on:
+  push:
+    branches: [ "main" ]
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: macos-latest
+
+    steps:
+    # Step 1: Check out the source code from the repository
+    - name: Checkout source code
+      uses: actions/checkout@v4
+
+    # Step 2: Install dependencies needed to create a DMG
+    - name: Install build tools
+      run: |
+        brew install create-dmg
+
+    # Step 3: Run the build script to generate the .app bundle
+    - name: Build Application
+      run: |
+        chmod +x build.sh
+        ./build.sh
+
+    # Step 4: Package the .app bundle into a .dmg file
+    - name: Package DMG
+      run: |
+        create-dmg \
+          --volname "Launcher Installer" \
+          --volicon "MyLauncher.app/Contents/Resources/Automation.icns" \
+          --window-pos 200 120 \
+          --window-size 600 400 \
+          --icon-size 100 \
+          --icon "MyLauncher.app" 175 120 \
+          --hide-extension "MyLauncher.app" \
+          --app-drop-link 425 120 \
+          "Launcher-macOS.dmg" \
+          "MyLauncher.app"
+
+    # Step 5: Upload the finished DMG so it can be downloaded from GitHub
+    - name: Upload Artifact
+      uses: actions/upload-artifact@v4
+      with:
+        name: Launcher-DMG
+        path: Launcher-macOS.dmg
